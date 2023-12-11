@@ -38,12 +38,6 @@ void menuBack(uint8_t param);
 void menuClose(uint8_t param);
 void setupMenu();
 
-#include "Storage.h"  
-#include "LCDMenuLib2.h"  
-#include "ClickEncoder.h"
-#include "defaults.h"
-// #include "display.h"
-
 LCDMenuLib2_menu LCDML_0(255, 0, 0, NULL, NULL);
 LCDMenuLib2 LCDML(LCDML_0, _LCDML_DISP_rows, _LCDML_DISP_cols, displayMenu, clearMenu, menuControls);
 

@@ -45,9 +45,9 @@ int writeSysParamsToStorage(void);
 #define STANDBY_MODE_TIME 30       // Time in minutes until the heater is turned off   
 
 // Backflush values
-#define FILLTIME 3000              // time in ms the pump is running
-#define FLUSHTIME 6000             // time in ms the 3-way valve is open -> backflush
-#define MAXFLUSHCYCLES 5           // number of cycles the backflush should run, 0 = disabled
+#define FILLTIME 4000              // time in ms the pump is running
+#define FLUSHTIME 5000             // time in ms the 3-way valve is open -> backflush
+#define MAXFLUSHCYCLES 10           // number of cycles the backflush should run, 0 = disabled
 
 #define PID_KP_START_MIN 0
 #define PID_KP_START_MAX 350
@@ -121,6 +121,6 @@ static const int _LCDML_DISP_h = SCREEN_HEIGHT;
 #define _LCDML_DISP_font_h            13             // font height
 // cursor settings
 #define _LCDML_DISP_cursor_char       "X"            // cursor char
-#define _LCDML_DISP_cur_space_before  2              // cursor space between
+#define _LCDML_DISP_cur_space_before  1              // cursor space between
 #define _LCDML_DISP_cur_space_behind  4              // cursor space between
 #endif

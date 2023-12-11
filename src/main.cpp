@@ -43,8 +43,10 @@ hw_timer_t *timer = NULL;
     #include <LCDMenuLib2.h>
     #include <ClickEncoder.h>
     #include "menu.h"
-    Encoder encoder{PIN_ROTARY_DT, PIN_ROTARY_CLK, ENCODER_CLICKS_PER_NOTCH, LOW};
+    // Encoder encoder{PIN_ROTARY_DT, PIN_ROTARY_CLK, ENCODER_CLICKS_PER_NOTCH, LOW};
     Button button{PIN_ROTARY_SW, LOW};
+    Encoder encoder(GPIO_NUM_13, GPIO_NUM_14);
+    hw_timer_t *encoderTimer = NULL;
     boolean menuOpen = false;
 #endif
 
@@ -1516,7 +1518,7 @@ void websiteSetup() {
 const char sysVersion[] = (STR(FW_VERSION) "." STR(FW_SUBVERSION) "." STR(FW_HOTFIX) " " FW_BRANCH " " AUTO_VERSION);
 
 void encoderService() {
-    encoder.service();
+    // encoder.service();
 }
 
 void setup() {
@@ -2061,9 +2063,9 @@ void setup() {
         pinMode(PIN_ROTARY_CLK, INPUT_PULLUP);
         pinMode(PIN_ROTARY_SW, INPUT_PULLUP);
 
-         // Attach interrupts
-        attachInterrupt(digitalPinToInterrupt(PIN_ROTARY_DT), encoderService, CHANGE);
-        attachInterrupt(digitalPinToInterrupt(PIN_ROTARY_CLK), encoderService, CHANGE);
+        // // Attach interrupts
+        // attachInterrupt(digitalPinToInterrupt(PIN_ROTARY_DT), encoderService, CHANGE);
+        // attachInterrupt(digitalPinToInterrupt(PIN_ROTARY_CLK), encoderService, CHANGE);
 
         setupMenu();
     #endif
@@ -2157,7 +2159,7 @@ void setup() {
     #endif
 
     #if ROTARY_MENU == 1
-        encoder.setAccelerationEnabled(true);
+        // encoder.setAccelerationEnabled(true);
     #endif
 
     setupDone = true;

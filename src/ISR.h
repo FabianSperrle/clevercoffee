@@ -19,6 +19,8 @@ extern bool skipHeaterISR;
 extern hw_timer_t *timer;
 #if (ROTARY_MENU == 1)
 extern Button button;
+extern Encoder encoder;
+extern hw_timer_t *encoderTimer;
 #endif
 
 void initTimer1(void);
