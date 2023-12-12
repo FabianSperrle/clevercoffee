@@ -9,7 +9,7 @@
 #include "userConfig.h"
 
 #if (LANGUAGE == 0) // DE
-#if (DISPLAYTEMPLATE == 1) || (DISPLAYTEMPLATE == 2)
+#if (DISPLAYTEMPLATE <= 3)
     static const char *langstring_set_temp = "Soll:  ";
     static const char *langstring_current_temp = "Ist:   ";
     static const char *langstring_brew = "Brew:  ";
@@ -55,7 +55,7 @@ static const char *langstring_autoclose[] = {"Menue schliesst sich in", "2 Sekun
 
 
 #elif LANGUAGE == 1 // EN
-#if (DISPLAYTEMPLATE == 1) || (DISPLAYTEMPLATE == 2)
+#if (DISPLAYTEMPLATE <= 3)
     static const char *langstring_set_temp = "Set:   ";
     static const char *langstring_current_temp = "Temp:  ";
     static const char *langstring_brew = "Brew:  ";
@@ -100,7 +100,7 @@ static const char *langstring_pressToSave[] = {"Press encoder to save", "and ret
 static const char *langstring_autoclose[] = {"Menu will autoclose", "in two seconds."};
 
 #elif LANGUAGE == 2 // ES
-#if (DISPLAYTEMPLATE == 1) || (DISPLAYTEMPLATE == 2)
+#if (DISPLAYTEMPLATE <= 3)
     static const char *langstring_set_temp = "Obj:  ";
     static const char *langstring_current_temp = "T:    ";
     static const char *langstring_brew = "Brew:  ";

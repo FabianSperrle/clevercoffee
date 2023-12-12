@@ -14,7 +14,6 @@ extern unsigned long windowStartTime;
 extern double pidOutput;
 extern unsigned int isrCounter;
 extern unsigned int windowSize;
-extern bool skipHeaterISR;
 
 extern hw_timer_t *timer;
 #if (ROTARY_MENU == 1)

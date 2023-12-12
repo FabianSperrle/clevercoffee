@@ -13,7 +13,6 @@
 unsigned int isrCounter = 0;  // counter for ISR
 unsigned long windowStartTime;
 unsigned int windowSize = 1000;
-bool skipHeaterISR = false;
 
 
 void IRAM_ATTR onTimer(){
