@@ -69,7 +69,8 @@ enum MACHINE {
 #define SCALE_CALIBRATION_FACTOR 3195.83    // Raw data is divided by this value to convert to readable data
 
 // Rotary Encoder Menu
-#define ROTARY_MENU 0
+#define ROTARY_MENU 0              // 0 = off, 1 = on
+#define ROTARY_MENU_DEBUG 0        // 0 = off, 1 = on
 
 /* Pressure sensor
  *

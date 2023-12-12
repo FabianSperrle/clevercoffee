@@ -2183,10 +2183,12 @@ void loop() {
 
     #if ROTARY_MENU == 1
         if (menuOpen == false) {
-            if (xQueueReceive(button_events, &ev, 1000/portTICK_PERIOD_MS)) {
+            if (xQueueReceive(button_events, &ev, 1/portTICK_PERIOD_MS)) {
                 if (ev.event == BUTTON_DOWN) {
                     menuOpen = true;
-                    debugPrintf("Opening Menu!\n");
+                    #if ROTARY_MENU_DEBUG == 1
+                        debugPrintf("Opening Menu!\n");
+                    #endif 
                     displayMenu();
                 }
             }

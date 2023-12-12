@@ -54,14 +54,14 @@ int last = 0;
 
 void changeNumericalValue(uint8_t param, double value, sto_item_id_t name, const char* readableName, const char* unit) {
     if(LCDML.FUNC_setup()) {
-        menuRotaryLast = encoder.getCount() / 4;
+        menuRotaryLast = encoder.getCount() / ENCODER_CLICKS_PER_NOTCH;
         initialValue = value;
 
         displayNumericalMenuSettingWithUnit(initialValue, readableName, unit);
     }
 
     if(LCDML.FUNC_loop()) {
-        int32_t pos = encoder.getCount() / 4;
+        int32_t pos = encoder.getCount() / ENCODER_CLICKS_PER_NOTCH;
         double diff = static_cast<double>(pos - menuRotaryLast) / 10.0;
 
         if (diff != 0) {
@@ -184,19 +184,25 @@ LCDML_createMenu(_LCDML_DISP_cnt);
 
 // Translate encoder events to menu events
 void menuControls(void) {
-    int32_t pos = encoder.getCount() / 4;
+    int32_t pos = encoder.getCount() / ENCODER_CLICKS_PER_NOTCH;
     if (pos < last) {
         LCDML.BT_up();
-        debugPrintf("Up\n");
+        #if ROTARY_MENU_DEBUG == 1
+            debugPrintf("Up\n");
+        #endif 
     } 
     else if (pos > last) {
         LCDML.BT_down();
-        debugPrintf("Down\n");
+        #if ROTARY_MENU_DEBUG == 1
+            debugPrintf("Down\n");
+        #endif
     } 
     else {
-        if (xQueueReceive(button_events, &ev, 1000/portTICK_PERIOD_MS)) {
+        if (xQueueReceive(button_events, &ev, 1/portTICK_PERIOD_MS)) {
             if (ev.event == BUTTON_DOWN) {
-                debugPrintf("Processing Click");
+                #if ROTARY_MENU_DEBUG == 1
+                    debugPrintf("Processing Click");
+                #endif
                 LCDML.BT_enter();
             } else {
                 // do nothing
