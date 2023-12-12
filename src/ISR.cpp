@@ -61,13 +61,17 @@ void initEncoderTimer(void) {
 
 void enableTimer1(void) {
     timerAlarmEnable(timer);
+#if ROTARY_MENU == 1
     timerAlarmEnable(encoderTimer);
+#endif
 }
 
 
 void disableTimer1(void) {
     timerAlarmDisable(timer);
+#if ROTARY_MENU == 1
     timerAlarmDisable(encoderTimer);
+#endif
 }
 
 

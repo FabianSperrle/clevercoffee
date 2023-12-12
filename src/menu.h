@@ -6,6 +6,7 @@
 #include "ClickEncoder.h"
 #include "defaults.h"
 #include "languages.h"
+#include "debugSerial.h"
 
 extern LCDMenuLib2_menu LCDML_0;
 extern LCDMenuLib2 LCDML;
@@ -184,12 +185,15 @@ void menuControls(void) {
 
     if (pos < last) {
         LCDML.BT_up();
+        debugPrintf("Up\n");
     } 
     else if (pos > last) {
         LCDML.BT_down();
+        debugPrintf("Down\n");
     } 
     else {
         if (buttonState == Button::Clicked) {
+            debugPrintf("Processing Click");
             LCDML.BT_enter();
         } else {
             // do nothing

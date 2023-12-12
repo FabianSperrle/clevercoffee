@@ -2008,6 +2008,7 @@ void setup() {
     Serial.begin(115200);
 
     initTimer1();
+    initEncoderTimer();
 
     storageSetup();
 
@@ -2180,6 +2181,7 @@ void loop() {
             Button::eButtonStates buttonState = button.getButton();
             if (buttonState == Button::Clicked) {
                 menuOpen = true;
+                debugPrintf("Opening Menu!\n");
                 displayMenu();
             }
         }

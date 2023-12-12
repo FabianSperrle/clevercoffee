@@ -24,6 +24,7 @@ extern hw_timer_t *encoderTimer;
 #endif
 
 void initTimer1(void);
+void initEncoderTimer(void);
 void enableTimer1(void);
 void disableTimer1(void);
 bool isTimer1Enabled(void);
