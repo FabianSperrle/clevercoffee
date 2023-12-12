@@ -41,12 +41,12 @@
 hw_timer_t *timer = NULL;
 #if (ROTARY_MENU == 1)
     #include <LCDMenuLib2.h>
-    #include <ClickEncoder.h>
     #include "menu.h"
-    // Encoder encoder{PIN_ROTARY_DT, PIN_ROTARY_CLK, ENCODER_CLICKS_PER_NOTCH, LOW};
-    Button button{PIN_ROTARY_SW, LOW};
-    Encoder encoder(GPIO_NUM_13, GPIO_NUM_14);
-    hw_timer_t *encoderTimer = NULL;
+    #include <ESP32Encoder.h> 
+    ESP32Encoder encoder;
+    #include "button.h"
+    button_event_t ev;
+    QueueHandle_t button_events = button_init(PIN_BIT(PIN_ROTARY_SW));
     boolean menuOpen = false;
 #endif
 
@@ -2015,7 +2015,6 @@ void setup() {
     Serial.begin(115200);
 
     initTimer1();
-    initEncoderTimer();
 
     storageSetup();
 
@@ -2071,9 +2070,8 @@ void setup() {
         pinMode(PIN_ROTARY_CLK, INPUT_PULLUP);
         pinMode(PIN_ROTARY_SW, INPUT_PULLUP);
 
-        // // Attach interrupts
-        // attachInterrupt(digitalPinToInterrupt(PIN_ROTARY_DT), encoderService, CHANGE);
-        // attachInterrupt(digitalPinToInterrupt(PIN_ROTARY_CLK), encoderService, CHANGE);
+        encoder.attachFullQuad(PIN_ROTARY_DT, PIN_ROTARY_CLK);
+        encoder.setCount(0);
 
         setupMenu();
     #endif
@@ -2185,11 +2183,12 @@ void loop() {
 
     #if ROTARY_MENU == 1
         if (menuOpen == false) {
-            Button::eButtonStates buttonState = button.getButton();
-            if (buttonState == Button::Clicked) {
-                menuOpen = true;
-                debugPrintf("Opening Menu!\n");
-                displayMenu();
+            if (xQueueReceive(button_events, &ev, 1000/portTICK_PERIOD_MS)) {
+                if (ev.event == BUTTON_DOWN) {
+                    menuOpen = true;
+                    debugPrintf("Opening Menu!\n");
+                    displayMenu();
+                }
             }
         }
 

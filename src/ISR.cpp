@@ -32,14 +32,6 @@ void IRAM_ATTR onTimer(){
     }
 }
 
-#if ROTARY_MENU == 1
-void IRAM_ATTR onEncoderTimer() {
-    timerAlarmWrite(encoderTimer, 1000, true);
-    encoder.service();
-    button.service();
-}
-#endif
-
 /**
  * @brief Initialize hardware timers
  */
@@ -49,30 +41,13 @@ void initTimer1(void) {
     timerAlarmWrite(timer, 10000, true);//m
 }
 
-#if ROTARY_MENU == 1
-void initEncoderTimer(void) {
-    encoderTimer = timerBegin(1, 80, true); //m
-    timerAttachInterrupt(encoderTimer, &onEncoderTimer, true);//m
-    timerAlarmWrite(encoderTimer, 1000, true);//m
-}
-#endif
-
-
 void enableTimer1(void) {
     timerAlarmEnable(timer);
-#if ROTARY_MENU == 1
-    timerAlarmEnable(encoderTimer);
-#endif
 }
-
 
 void disableTimer1(void) {
     timerAlarmDisable(timer);
-#if ROTARY_MENU == 1
-    timerAlarmDisable(encoderTimer);
-#endif
 }
-
 
 bool isTimer1Enabled(void) {
     return timerAlarmEnabled(timer);

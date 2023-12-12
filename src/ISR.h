@@ -8,7 +8,6 @@
 #pragma once
 
 #include "userConfig.h"
-#include <ClickEncoder.h>
 
 extern unsigned long windowStartTime;
 extern double pidOutput;
@@ -16,14 +15,8 @@ extern unsigned int isrCounter;
 extern unsigned int windowSize;
 
 extern hw_timer_t *timer;
-#if (ROTARY_MENU == 1)
-extern Button button;
-extern Encoder encoder;
-extern hw_timer_t *encoderTimer;
-#endif
 
 void initTimer1(void);
-void initEncoderTimer(void);
 void enableTimer1(void);
 void disableTimer1(void);
 bool isTimer1Enabled(void);

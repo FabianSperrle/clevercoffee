@@ -3,15 +3,17 @@
 
 #include "LCDMenuLib2.h"  // Include this if LCDMenuLib2.h is not included in the main file
 #include "Storage.h"
-#include "ClickEncoder.h"
+#include <ESP32Encoder.h>
+#include "button.h"
 #include "defaults.h"
 #include "languages.h"
 #include "debugSerial.h"
 
 extern LCDMenuLib2_menu LCDML_0;
 extern LCDMenuLib2 LCDML;
-extern Encoder encoder;
-extern Button button;
+extern ESP32Encoder encoder;
+extern button_event_t ev;
+extern QueueHandle_t button_events;
 
 extern double brewSetpoint;
 extern double steamSetpoint;
@@ -48,14 +50,14 @@ int last = 0;
 
 void changeNumericalValue(uint8_t param, double value, sto_item_id_t name, const char* readableName, const char* unit) {
     if(LCDML.FUNC_setup()) {
-        menuRotaryLast = encoder.getAccumulate();
+        menuRotaryLast = encoder.getCount() / 4;
         initialValue = value;
 
         displayNumericalMenuSettingWithUnit(initialValue, readableName, unit);
     }
 
     if(LCDML.FUNC_loop()) {
-        int32_t pos = encoder.getAccumulate();
+        int32_t pos = encoder.getCount() / 4;
         double diff = static_cast<double>(pos - menuRotaryLast) / 10.0;
         if (diff != 0) {
             initialValue = initialValue + diff;
@@ -180,9 +182,7 @@ LCDML_createMenu(_LCDML_DISP_cnt);
 
 // Translate encoder events to menu events
 void menuControls(void) {
-    int32_t pos = encoder.getAccumulate();
-    Button::eButtonStates buttonState = button.getButton();
-
+    int32_t pos = encoder.getCount() / 4;
     if (pos < last) {
         LCDML.BT_up();
         debugPrintf("Up\n");
@@ -192,11 +192,13 @@ void menuControls(void) {
         debugPrintf("Down\n");
     } 
     else {
-        if (buttonState == Button::Clicked) {
-            debugPrintf("Processing Click");
-            LCDML.BT_enter();
-        } else {
-            // do nothing
+        if (xQueueReceive(button_events, &ev, 1000/portTICK_PERIOD_MS)) {
+            if (ev.event == BUTTON_DOWN) {
+                debugPrintf("Processing Click");
+                LCDML.BT_enter();
+            } else {
+                // do nothing
+            }
         }
     }
 
