@@ -45,9 +45,9 @@ int writeSysParamsToStorage(void);
 #define STANDBY_MODE_TIME 30       // Time in minutes until the heater is turned off   
 
 // Backflush values
-#define FILLTIME 4000              // time in ms the pump is running
-#define FLUSHTIME 5000             // time in ms the 3-way valve is open -> backflush
-#define MAXFLUSHCYCLES 10           // number of cycles the backflush should run, 0 = disabled
+#define FILLTIME 3000              // time in ms the pump is running
+#define FLUSHTIME 6000             // time in ms the 3-way valve is open -> backflush
+#define MAXFLUSHCYCLES 5           // number of cycles the backflush should run, 0 = disabled
 
 #define PID_KP_START_MIN 0
 #define PID_KP_START_MAX 350
