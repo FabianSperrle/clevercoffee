@@ -8,7 +8,6 @@
 #include <Arduino.h>
 #include "ISR.h"
 #include "pinmapping.h"
-#include "userConfig.h"
 
 unsigned int isrCounter = 0;  // counter for ISR
 unsigned long windowStartTime;
