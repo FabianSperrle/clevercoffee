@@ -52,5 +52,9 @@ unsigned long previousMillistempanalogreading;      // ms for analogreading
     bool scaleFailure = false;
     const unsigned long intervalWeight = 200;           // weight scale
     unsigned long previousMillisScale;                  // initialisation at the end of init()
+    unsigned long previousMillisScale2;                  // initialisation at the end of init()
     HX711_ADC LoadCell(PIN_HXDAT, PIN_HXCLK);
+    #if SINGLE_HX711 == 0 
+    HX711_ADC LoadCell2(PIN_HXDAT2, PIN_HXCLK);
+    #endif 
 #endif
