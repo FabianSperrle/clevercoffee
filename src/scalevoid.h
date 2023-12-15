@@ -31,10 +31,9 @@ void calibrate(HX711_ADC loadCell, int pin, sto_item_id_t name, float *calibrati
     debugPrintf("Taking scale load point\n");
     loadCell.refreshDataSet();  
     float cali = loadCell.getNewCalibration(scaleKnownWeight);
-    loadCell.setCalFactor(cali);
     debugPrintf("New calibration: %f\n", cali);
     u8g2.sendBuffer();
-    storageSet(name, cali);
+    storageSet(name, cali, true);
     *calibration = cali;
     u8g2.clearBuffer();
     u8g2.drawStr(2, 2, "Calibration done!");
@@ -57,14 +56,15 @@ void checkWeight() {
         return;
     }
 
+    static boolean newDataReady = 0;
+    // check for new data/start next conversion:
+    if (LoadCell.update()) newDataReady = true;
 
-    if (LoadCell.update()) {
-        if (currentMillisScale - previousMillisScale >= intervalWeight) {
+    if (newDataReady) {
+        if (currentMillisScale - previousMillisScale >= intervalWeight * 10) {
         previousMillisScale = currentMillisScale;
             w1 = LoadCell.getData();
-            debugPrintf("Got new weight W1: %f.2\n", w1);
-            debugPrintf("Current weights: %f.2 and %f.2\n", w1, w2);
-            debugPrintf("Current total: %f.2\n", w1 + w2);
+            Serial.println(w1);
         }
     }
 
@@ -137,8 +137,7 @@ void initScale() {
  * @return true iff the calibration fails, else false.
  */
 boolean initScale(HX711_ADC loadCell, int pin, bool shouldCalibrate, sto_item_id_t name, float* calibrationFactor) {
-    readSysParamsFromStorage();
-    loadCell.begin(128);
+    loadCell.begin();
     long stabilizingtime = 5000; // tare preciscion can be improved by adding a few seconds of stabilizing time
     boolean _tare = true; //set this to false if you don't want tare to be performed in the next step
     u8g2.clearBuffer();
@@ -148,7 +147,7 @@ boolean initScale(HX711_ADC loadCell, int pin, bool shouldCalibrate, sto_item_id
     u8g2.drawStr(0, 22, "....");
     u8g2.sendBuffer();
     delay(2000);
-    loadCell.startMultiple(stabilizingtime, _tare);
+    loadCell.start(stabilizingtime, _tare);
     delay(5000);
 
     if (loadCell.getTareTimeoutFlag() || loadCell.getSignalTimeoutFlag() ) {
@@ -164,13 +163,13 @@ boolean initScale(HX711_ADC loadCell, int pin, bool shouldCalibrate, sto_item_id
             loadCell.setCalFactor(1.0);
             while (!loadCell.update());
             calibrate(loadCell, pin, name, calibrationFactor);
-            loadCell.setSamplesInUse(SCALE_SAMPLES);
+            // loadCell.setSamplesInUse(SCALE_SAMPLES);
             u8g2.drawStr(0, 52, "done.");
             delay(2000);
         }
         else {
             loadCell.setCalFactor(scaleCalibration); // set calibration factor (float)
-            loadCell.setSamplesInUse(SCALE_SAMPLES);
+            // loadCell.setSamplesInUse(SCALE_SAMPLES);
             u8g2.drawStr(0, 42, number2string(scaleCalibration));
             u8g2.drawStr(0, 52, "done.");
             u8g2.sendBuffer();
