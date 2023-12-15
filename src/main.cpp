@@ -39,17 +39,6 @@
 
 
 hw_timer_t *timer = NULL;
-#if (ROTARY_MENU == 1)
-    #include <LCDMenuLib2.h>
-    #include "menu.h"
-    #include <ESP32Encoder.h> 
-    ESP32Encoder encoder;
-    #include "button.h"
-    button_event_t ev;
-    QueueHandle_t button_events = button_init(PIN_BIT(PIN_ROTARY_SW));
-    boolean menuOpen = false;
-#endif
-
 
 #if OLED_DISPLAY == 3
 #include <SPI.h>
@@ -256,7 +245,7 @@ float inX = 0, inY = 0, inOld = 0, inSum = 0; // used for filterPressureValue()
 int signalBars = 0;              // used for getSignalStrength()
 boolean brewDetected = 0;
 boolean setupDone = false;
-int backflushON = 0;             // 1 = backflush mode active
+uint8_t backflushON = 0;             // 1 = backflush mode active
 int flushCycles = 0;             // number of active flush cycles
 int backflushState = 10;         // counter for state machine
 
@@ -459,6 +448,17 @@ const unsigned long intervalDisplay = 500;
             debugPrintf("pressure raw / filtered: %f / %f\n", inputPressure, inputPressureFilter);
         }
     }
+#endif
+
+#if (ROTARY_MENU == 1)
+    #include <LCDMenuLib2.h>
+    #include <ESP32Encoder.h> 
+    ESP32Encoder encoder;
+    #include "button.h"
+    button_event_t ev;
+    QueueHandle_t button_events = button_init(PIN_BIT(PIN_ROTARY_SW));
+    boolean menuOpen = false;
+    #include "menu.h"
 #endif
 
 // Emergency stop if temp is too high
@@ -2172,7 +2172,7 @@ void loop() {
     #if ROTARY_MENU == 1
         if (menuOpen == false) {
             if (xQueueReceive(button_events, &ev, 1/portTICK_PERIOD_MS)) {
-                if (ev.event == BUTTON_DOWN) {
+                if (ev.event == BUTTON_UP) {
                     menuOpen = true;
                     #if ROTARY_MENU_DEBUG == 1
                         debugPrintf("Opening Menu!\n");
