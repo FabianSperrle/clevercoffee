@@ -66,6 +66,7 @@ enum MACHINE {
 
 // Brew Scale
 #define SCALE_SAMPLES 2                    // Load cell sample rate
+#define SINGLE_HX711 0             // 1 = Only a single HX711 with two channels, 0 = one HX711 per load cell
 
 /* Pressure sensor
  *
