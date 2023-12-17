@@ -28,8 +28,11 @@ void calibrate(HX711_ADC loadCell, int pin, sto_item_id_t name, float *calibrati
     u8g2.sendBuffer();
     delay(10000);
     debugPrintf("Taking scale load point\n");
+    // increase scale samples temporarily to ensure a stable reading
+    loadCell.setSamplesInUse(128);
     loadCell.refreshDataSet();  
     *calibration = loadCell.getNewCalibration(scaleKnownWeight);
+    loadCell.setSamplesInUse(SCALE_SAMPLES);
     debugPrintf("New calibration: %f\n", *calibration);
     u8g2.sendBuffer();
     storageSet(name, *calibration, true);
@@ -70,6 +73,7 @@ void checkWeight() {
 
             #if SINGLE_HX711 == 0
             w2 = LoadCell2.getData();
+            debugPrintf("Current weight: %.2f from %.2f and %.2f\n", weight, w1, w2);
             #endif
         }
     }
@@ -99,7 +103,7 @@ void checkWeight() {
         LoadCell.tare();
         LoadCell.setCalFactor(scaleCalibration);
         #if SINGLE_HX711 == 0
-        LoadCell.setCalFactor(scale2Calibration);
+        LoadCell2.setCalFactor(scale2Calibration);
         LoadCell2.tare();
         #endif
         u8g2.drawStr(0, 32, "done");
@@ -116,14 +120,12 @@ void initScale() {
     #if SINGLE_HX711 == 0
     LoadCell2.begin();
     #endif 
-    long stabilizingtime = 5000; // tare preciscion can be improved by adding a few seconds of stabilizing time
-    boolean _tare = true; //set this to false if you don't want tare to be performed in the next step
-    u8g2.clearBuffer();
-    u8g2.drawStr(0, 2, "Taring scale"); 
-    u8g2.drawStr(0, 12, "remove any load!");
-    u8g2.drawStr(0, 22, "....");
-    u8g2.sendBuffer();
-    delay(2000);
+    // u8g2.clearBuffer();
+    // u8g2.drawStr(0, 2, "Taring scale"); 
+    // u8g2.drawStr(0, 12, "remove any load!");
+    // u8g2.drawStr(0, 22, "....");
+    // u8g2.sendBuffer();
+    // delay(2000);
     #if SINGLE_HX711 == 1
     while(!LoadCell.startMultiple(stabilizingtime, _tare));
     #else 
@@ -132,8 +134,8 @@ void initScale() {
     // run startup, stabilization and tare, both modules simultaniously
     // this parallel start seems to be the most important part to get accurate readings with two HX711s connected
     while ((loadCellReady + loadCell2Ready) < 2) { 
-        if (!loadCellReady) loadCellReady = LoadCell.startMultiple(stabilizingtime, _tare);
-        if (!loadCell2Ready) loadCell2Ready = LoadCell2.startMultiple(stabilizingtime, _tare);
+        if (!loadCellReady) loadCellReady = LoadCell.startMultiple(5000, true);
+        if (!loadCell2Ready) loadCell2Ready = LoadCell2.startMultiple(5000, true);
     }
     #endif
 
@@ -163,7 +165,7 @@ void initScale() {
     LoadCell.setSamplesInUse(SCALE_SAMPLES);
 
     #if SINGLE_HX711 == 0
-    LoadCell2.setCalFactor(scaleCalibration); 
+    LoadCell2.setCalFactor(scale2Calibration); 
     LoadCell2.setSamplesInUse(SCALE_SAMPLES);
     #endif 
 
