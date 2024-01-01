@@ -100,7 +100,7 @@ const int OnlyPID = ONLYPID;
 const int TempSensor = TEMPSENSOR;
 const int brewDetectionMode = BREWDETECTION;
 const int triggerType = TRIGGERTYPE;
-const int VoltageSensorType = VOLTAGESENSORTYPE;
+const int optoCouplerType = OPTOCOUPLERTYPE;
 const boolean ota = OTA;
 int BrewMode = BREWMODE;
 
@@ -118,7 +118,6 @@ unsigned long lastWifiConnectionAttempt = millis();
 unsigned int wifiReconnects = 0;  // actual number of reconnects
 
 // OTA
-const char *OTAhost = OTAHOST;
 const char *OTApass = OTAPASS;
 
 // Backflush values
@@ -129,7 +128,7 @@ int maxflushCycles = MAXFLUSHCYCLES;
 // Voltage Sensor
 unsigned long previousMillisVoltagesensorreading = millis();
 const unsigned long intervalVoltagesensor = 200;
-int VoltageSensorON, VoltageSensorOFF;
+int optoCouplerON, optoCouplerOFF;
 
 // QuickMill thermoblock steam-mode (only for BREWDETECTION = 3)
 const int maxBrewDurationForSteamModeQM_ON = 200;   // if brewtime is shorter steam-mode starts
@@ -763,13 +762,13 @@ void brewDetection() {
         }
     } else if (brewDetectionMode == 3) {
         // timeBrewed counter
-        if ((digitalRead(PIN_BREWSWITCH) == VoltageSensorON) && brewDetected == 1) {
+        if ((digitalRead(PIN_BREWSWITCH) == optoCouplerON) && brewDetected == 1) {
             timeBrewed = millis() - startingTime;
             lastbrewTime = timeBrewed;
         }
 
         // OFF: reset brew
-        if ((digitalRead(PIN_BREWSWITCH) == VoltageSensorOFF) && (brewDetected == 1 || coolingFlushDetectedQM == true)) {
+        if ((digitalRead(PIN_BREWSWITCH) == optoCouplerOFF) && (brewDetected == 1 || coolingFlushDetectedQM == true)) {
             isBrewDetected = 0;  // rearm brewDetection
             brewDetected = 0;
             timePVStoON = timeBrewed;  // for QuickMill
@@ -801,7 +800,7 @@ void brewDetection() {
                 if (!coolingFlushDetectedQM) {
                     int pvs = digitalRead(PIN_BREWSWITCH);
 
-                    if (pvs == VoltageSensorON && brewDetected == 0 &&
+                    if (pvs == optoCouplerON && brewDetected == 0 &&
                         brewSteamDetectedQM == 0 && !steamQM_active) {
                         timeBrewDetection = millis();
                         timePVStoON = millis();
@@ -815,7 +814,7 @@ void brewDetection() {
 
                     const unsigned long minBrewDurationForSteamModeQM_ON = 50;
                     if (brewSteamDetectedQM == 1 && millis()-timePVStoON > minBrewDurationForSteamModeQM_ON) {
-                        if (pvs == VoltageSensorOFF) {
+                        if (pvs == optoCouplerOFF) {
                             brewSteamDetectedQM = 0;
 
                             if (millis() - timePVStoON < maxBrewDurationForSteamModeQM_ON) {
@@ -844,7 +843,7 @@ void brewDetection() {
             default:
                 previousMillisVoltagesensorreading = millis();
 
-                if (digitalRead(PIN_BREWSWITCH) == VoltageSensorON && brewDetected == 0) {
+                if (digitalRead(PIN_BREWSWITCH) == optoCouplerON && brewDetected == 0) {
                     debugPrintln("HW Brew - Voltage Sensor - Start");
                     timeBrewDetection = millis();
                     startingTime = millis();
@@ -925,7 +924,7 @@ boolean checkSteamOffQM() {
      * thermoblock. Once the pinvolagesenor remains OFF for longer than a
      * pump-pulse time peride the switch is turned off and steam mode finished.
      */
-    if (digitalRead(PIN_BREWSWITCH) == VoltageSensorON) {
+    if (digitalRead(PIN_BREWSWITCH) == optoCouplerON) {
         lastTimePVSwasON = millis();
     }
 
@@ -2100,17 +2099,19 @@ void setup() {
     if (triggerType) {
         relayON = HIGH;
         relayOFF = LOW;
-    } else {
+    } 
+    else {
         relayON = LOW;
         relayOFF = HIGH;
     }
 
-    if (VOLTAGESENSORTYPE) {
-        VoltageSensorON = HIGH;
-        VoltageSensorOFF = LOW;
-    } else {
-        VoltageSensorON = LOW;
-        VoltageSensorOFF = HIGH;
+    if (OPTOCOUPLERTYPE == HIGH) {
+        optoCouplerON = HIGH;
+        optoCouplerOFF = LOW;
+    } 
+    else {
+        optoCouplerON = LOW;
+        optoCouplerOFF = HIGH;
     }
 
     // Initialize Pins
@@ -2131,9 +2132,14 @@ void setup() {
         pinMode(PIN_STEAMSWITCH, INPUT_PULLDOWN);
     }
 
-    // IF Voltage sensor selected
+    // IF optocoupler selected
     if (BREWDETECTION == 3) {
-        pinMode(PIN_BREWSWITCH, PINMODEVOLTAGESENSOR);
+        if (OPTOCOUPLERTYPE == HIGH) {
+            pinMode(PIN_BREWSWITCH, INPUT_PULLDOWN);
+        } 
+        else {
+            pinMode(PIN_BREWSWITCH, INPUT_PULLUP);
+        }
     }
     else {
         pinMode(PIN_BREWSWITCH, INPUT_PULLDOWN);
@@ -2158,7 +2164,7 @@ void setup() {
 
         // OTA Updates
         if (ota && WiFi.status() == WL_CONNECTED) {
-            ArduinoOTA.setHostname(OTAhost);  //  Device name for OTA
+            ArduinoOTA.setHostname(hostname);  //  Device name for OTA
             ArduinoOTA.setPassword(OTApass);  //  Password for OTA
             ArduinoOTA.begin();
         }
