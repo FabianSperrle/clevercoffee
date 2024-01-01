@@ -127,7 +127,7 @@ void initScale() {
     // u8g2.sendBuffer();
     // delay(2000);
     #if SINGLE_HX711 == 1
-    while(!LoadCell.startMultiple(stabilizingtime, _tare));
+    while(!LoadCell.startMultiple(5000, true));
     #else 
     byte loadCellReady = 0;
     byte loadCell2Ready = 0;
