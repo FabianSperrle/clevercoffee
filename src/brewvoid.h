@@ -392,11 +392,7 @@ void brew() {
                 break;
 
             case 41:  // waiting time brew
-                if (timeBrewed > totalBrewTime || (weightBrew > (weightSetpoint - scaleDelayValue))) {
-                    brewcounter = kBrewFinished;
-                }
-
-                if (timeBrewed > totalBrewTime) {
+                if (weightBrew > (weightSetpoint - scaleDelayValue)) {
                     brewcounter = kBrewFinished;
                 }
 

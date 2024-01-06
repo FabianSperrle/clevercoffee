@@ -31,14 +31,18 @@ typedef struct __attribute__((packed)) {
     double brewTempOffset;
     uint8_t freeToUse3;
     double brewTimeMs;
-    uint8_t freeToUse4[2];
+    float scaleCalibration;
     double preInfusionTimeMs;
-    uint8_t freeToUse5[2];
+    float scaleKnownWeight;
     double preInfusionPauseMs;
     uint8_t freeToUse6[21];
     uint8_t pidBdOn;
     double pidKpBd;
+    #if SINGLE_HX711 == 1
     uint8_t freeToUse7[2];
+    #else
+    float scale2Calibration;
+    #endif
     double pidTnBd;
     uint8_t freeToUse8[2];
     double pidTvBd;
@@ -78,16 +82,17 @@ static const sto_data_t itemDefaults PROGMEM = {
     TEMPOFFSET,                               // STO_ITEM_BREW_TEMP_OFFSET
     0xFF,                                     // free to use
     BREW_TIME,                                // STO_ITEM_BREW_TIME
-    {0xFF, 0xFF},                             // free to use
+    SCALE_CALIBRATION_FACTOR,                    //STO_ITEM_SCALE_CALIBRATION_FACTOR
     PRE_INFUSION_TIME,                        // STO_ITEM_PRE_INFUSION_TIME
-    {0xFF, 0xFF},                             // free to use
+    SCALE_KNOWN_WEIGHT,                          // STO_ITEM_SCALE_KNOWN_WEIGHT
     PRE_INFUSION_PAUSE_TIME,                  // STO_ITEM_PRE_INFUSION_PAUSE
     {   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF },       // free to use
     0,                                        // STO_ITEM_USE_PID_BD
     AGGBKP,                                   // STO_ITEM_PID_KP_BD
-    {0xFF, 0xFF},                             // free to use
+    SCALE2_CALIBRATION_FACTOR,                //STO_ITEM_SCALE2_CALIBRATION_FACTOR
+    // {0xFF, 0xFF},                             // free to use
     AGGBTN,                                   // STO_ITEM_PID_TN_BD
     {0xFF, 0xFF},                             // free to use
     AGGBTV,                                   // STO_ITEM_PID_TV_BD
@@ -272,6 +277,23 @@ static inline int32_t getItemAddr(sto_item_id_t itemId, uint16_t* maxItemSize = 
         case STO_ITEM_STANDBY_MODE_TIME:
             addr = offsetof(sto_data_t, standbyModeTime);
             size = STRUCT_MEMBER_SIZE(sto_data_t,standbyModeTime);
+            break;
+
+        case STO_ITEM_SCALE_CALIBRATION_FACTOR:
+            addr = offsetof(sto_data_t,scaleCalibration );
+            size = STRUCT_MEMBER_SIZE(sto_data_t,scaleCalibration);
+            break;
+
+        #if SINGLE_HX711 == 0
+        case STO_ITEM_SCALE2_CALIBRATION_FACTOR:
+            addr = offsetof(sto_data_t,scale2Calibration );
+            size = STRUCT_MEMBER_SIZE(sto_data_t,scale2Calibration);
+            break;
+        #endif
+
+        case STO_ITEM_SCALE_KNOWN_WEIGHT:
+            addr = offsetof(sto_data_t,scaleKnownWeight );
+            size = STRUCT_MEMBER_SIZE(sto_data_t,scaleKnownWeight);
             break;
 
         default:

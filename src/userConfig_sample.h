@@ -64,8 +64,8 @@ enum MACHINE {
 #define TEMP_LED 1                 // Blink status LED when temp is in range
 
 // Brew Scale
-#define SCALE_SAMPLES 2                     // Load cell sample rate
-#define SCALE_CALIBRATION_FACTOR 3195.83    // Raw data is divided by this value to convert to readable data
+#define SCALE_SAMPLES 2                    // Load cell sample rate
+#define SINGLE_HX711 0             // 1 = Only a single HX711 with two channels, 0 = one HX711 per load cell
 
 /* Pressure sensor
  *

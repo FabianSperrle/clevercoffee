@@ -45,6 +45,12 @@ hw_timer_t *timer = NULL;
 #endif
 
 #if (BREWMODE == 2 || ONLYPIDSCALE == 1)
+    // #define HX711_ADC_config_h 
+    // #define SAMPLES 					2
+    // #define IGN_HIGH_SAMPLE 			1
+    // #define IGN_LOW_SAMPLE 				1
+    // #define SCK_DELAY					1
+    // #define SCK_DISABLE_INTERRUPTS		0		
     #include <HX711_ADC.h>
 #endif
 
@@ -147,6 +153,8 @@ bool coolingFlushDetectedQM = false;
 void setSteamMode(int steamMode);
 void setPidStatus(int pidStatus);
 void setBackflush(int backflush);
+void setTare(int tare);
+void setCalibration(int tare);
 void setNormalPIDTunings();
 void setBDPIDTunings();
 void loopcalibrate();
@@ -172,6 +180,11 @@ double brewSetpoint = SETPOINT;
 double brewTempOffset = TEMPOFFSET;
 double setpoint = brewSetpoint;
 double steamSetpoint = STEAMSETPOINT;
+float scaleCalibration = SCALE_CALIBRATION_FACTOR;
+#if SINGLE_HX711 == 0
+float scale2Calibration = SCALE_CALIBRATION_FACTOR;
+#endif
+float scaleKnownWeight = SCALE_KNOWN_WEIGHT;
 uint8_t usePonM = 0;               // 1 = use PonM for cold start PID, 0 = use normal PID for cold start
 double steamKp = STEAMKP;
 double startKp = STARTKP;
@@ -234,6 +247,11 @@ SysPara<double> sysParaSteamSetpoint(&steamSetpoint, STEAM_SETPOINT_MIN, STEAM_S
 SysPara<double> sysParaWeightSetpoint(&weightSetpoint, WEIGHTSETPOINT_MIN, WEIGHTSETPOINT_MAX, STO_ITEM_WEIGHTSETPOINT);
 SysPara<uint8_t> sysParaStandbyModeOn(&standbyModeOn, 0, 1, STO_ITEM_STANDBY_MODE_ON);
 SysPara<double> sysParaStandbyModeTime(&standbyModeTime, STANDBY_MODE_TIME_MIN, STANDBY_MODE_TIME_MAX, STO_ITEM_STANDBY_MODE_TIME);
+SysPara<float> sysParaScaleCalibration(&scaleCalibration, -100000, 100000, STO_ITEM_SCALE_CALIBRATION_FACTOR);
+#if SINGLE_HX711 == 0
+SysPara<float> sysParaScale2Calibration(&scale2Calibration, -100000, 100000, STO_ITEM_SCALE2_CALIBRATION_FACTOR);
+#endif
+SysPara<float> sysParaScaleKnownWeight(&scaleKnownWeight, 0, 2000, STO_ITEM_SCALE_KNOWN_WEIGHT);
 
 // Other variables
 int relayON, relayOFF;           // used for relay trigger type. Do not change!
@@ -255,7 +273,6 @@ unsigned long timeBrewDetection = 0;
 int isBrewDetected = 0;                 // flag is set if brew was detected
 bool movingAverageInitialized = false;  // flag set when average filter is initialized, also used for sensor check
 
-// Brewing, 1 = Normal Preinfusion , 2 = Scale & Shottimer = 2
 #include "brewscaleini.h"
 
 // Sensor check
@@ -316,6 +333,7 @@ enum SectionNames {
     sTempSection,
     sBDSection,
     sPowerSection,
+    sScaleSection,
     sOtherSection
 };
 
@@ -602,7 +620,6 @@ void refreshTemp() {
         }
     }
 }
-
 
 #include "brewvoid.h"
 #include "powerswitchvoid.h"
@@ -1926,13 +1943,82 @@ void setup() {
         .ptr = (void *)&standbyModeTime
     };
 
+#if (ONLYPIDSCALE == 1 || BREWMODE == 2)
+    editableVars["TARE_ON"] = {
+        .displayName = F("Tare"),
+        .hasHelpText = false,
+        .helpText = "",
+        .type = kUInt8,
+        .section = sScaleSection,
+        .position = 29,
+        .show = [] { return false; },
+        .minValue = 0,
+        .maxValue = 1,
+        .ptr = (void *)&tareON
+    };
+
+    editableVars["CALIBRATION_ON"] = {
+        .displayName = F("Calibration"),
+        .hasHelpText = false,
+        .helpText = "",
+        .type = kUInt8,
+        .section = sScaleSection,
+        .position = 30,
+        .show = [] { return false; },
+        .minValue = 0,
+        .maxValue = 1,
+        .ptr = (void *)&calibrationON
+    };
+
+        editableVars["SCALE_KNOWN_WEIGHT"] = {
+        .displayName = F("Known weight in g"),
+        .hasHelpText = false,
+        .helpText = "",
+        .type = kFloat,
+        .section = sScaleSection,
+        .position = 31,
+        .show = [] { return true; },
+        .minValue = 0,
+        .maxValue = 2000,
+        .ptr = (void *)&scaleKnownWeight
+    };
+
+        editableVars["SCALE_CALIBRATION"] = {
+        .displayName = F("Calibration factor scale 1"),
+        .hasHelpText = false,
+        .helpText = "",
+        .type = kFloat,
+        .section = sScaleSection,
+        .position = 32,
+        .show = [] { return true; },
+        .minValue = -100000,
+        .maxValue = 100000,
+        .ptr = (void *)&scaleCalibration
+    };
+
+    #if SINGLE_HX711 == 0
+        editableVars["SCALE2_CALIBRATION"] = {
+        .displayName = F("Calibration factor scale 2"),
+        .hasHelpText = false,
+        .helpText = "",
+        .type = kFloat,
+        .section = sScaleSection,
+        .position = 32,
+        .show = [] { return true; },
+        .minValue = -100000,
+        .maxValue = 100000,
+        .ptr = (void *)&scale2Calibration
+    };
+    #endif
+#endif
+
     editableVars["VERSION"] = {
         .displayName = F("Version"),
         .hasHelpText = false,
         .helpText = "",
         .type = kCString,
         .section = sOtherSection,
-        .position = 29,
+        .position = 33,
         .show = [] { return false; },
         .minValue = 0,
         .maxValue = 1,
@@ -1966,6 +2052,13 @@ void setup() {
 
     if (ONLYPIDSCALE == 1 || BREWMODE == 2) {
         mqttVars["weightSetpoint"] = []{ return &editableVars.at("SCALE_WEIGHTSETPOINT"); };
+        mqttVars["scaleCalibration"] = []{ return &editableVars.at("SCALE_CALIBRATION"); };
+        #if SINGLE_HX711 == 0
+        mqttVars["scale2Calibration"] = []{ return &editableVars.at("SCALE2_CALIBRATION"); };
+        #endif 
+        mqttVars["scaleKnownWeight"] = []{ return &editableVars.at("SCALE_KNOWN_WEIGHT"); };
+        mqttVars["tareON"] = []{ return &editableVars.at("TARE_ON"); };
+        mqttVars["calibrationON"] = []{ return &editableVars.at("CALIBRATION_ON"); };
     }
 
     if (BREWDETECTION > 0) {
@@ -1988,6 +2081,10 @@ void setup() {
     mqttSensors["currentKi"] = []{ return bPID.GetKi(); };
     mqttSensors["currentKd"] = []{ return bPID.GetKd(); };
     mqttSensors["machineState"] = []{ return machineState; };
+#if (BREWMODE == 2 || ONLYPIDSCALE == 1)
+    mqttSensors["currentWeight"] = []{ return weight; };
+#endif
+
 
     Serial.begin(115200);
 
@@ -2057,12 +2154,6 @@ void setup() {
         delay(2000); // caused crash with wifi manager on esp8266, should be ok on esp32
     #endif
 
-    // Init Scale by BREWMODE 2 or SHOTTIMER 2
-    #if (BREWMODE == 2 || ONLYPIDSCALE == 1)
-        initScale();
-    #endif
-
-
     // Fallback offline
     if (connectmode == 1) {  // WiFi Mode
         wiFiSetup();
@@ -2131,6 +2222,11 @@ void setup() {
     #endif
     #if (PRESSURESENSOR == 1)
         previousMillisPressure = currentTime;
+    #endif
+
+    // Init Scale by BREWMODE 2 or SHOTTIMER 2
+    #if (BREWMODE == 2 || ONLYPIDSCALE == 1)
+        initScale();
     #endif
 
     setupDone = true;
@@ -2396,6 +2492,16 @@ void setBackflush(int backflush) {
     backflushON = backflush;
 }
 
+#if (ONLYPIDSCALE == 1 || BREWMODE == 2)
+void setCalibration(int calibration) {
+    calibrationON = calibration;
+}
+
+void setTare(int tare) {
+    tareON = tare;
+}
+#endif
+
 void setSteamMode(int steamMode) {
     steamON = steamMode;
 
@@ -2484,6 +2590,11 @@ int readSysParamsFromStorage(void) {
     if (sysParaWifiCredentialsSaved.getStorage() != 0) return -1;
     if (sysParaStandbyModeOn.getStorage() != 0) return -1;
     if (sysParaStandbyModeTime.getStorage() != 0) return -1;
+    if (sysParaScaleCalibration.getStorage() != 0) return -1;
+    #if SINGLE_HX711 == 0
+    if (sysParaScale2Calibration.getStorage() != 0) return -1;
+    #endif
+    if (sysParaScaleKnownWeight.getStorage() != 0) return -1;
 
     return 0;
 }
@@ -2520,6 +2631,11 @@ int writeSysParamsToStorage(void) {
     if (sysParaWifiCredentialsSaved.setStorage() != 0) return -1;
     if (sysParaStandbyModeOn.setStorage() != 0) return -1;
     if (sysParaStandbyModeTime.setStorage() != 0) return -1;
+    if (sysParaScaleCalibration.setStorage() != 0) return -1;
+    #if SINGLE_HX711 == 0
+    if (sysParaScale2Calibration.setStorage() != 0) return -1;
+    #endif 
+    if (sysParaScaleKnownWeight.setStorage() != 0) return -1;
 
     return storageCommit();
 }
