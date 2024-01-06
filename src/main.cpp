@@ -37,8 +37,8 @@
 #include "defaults.h"
 #include <os.h>
 
-hw_timer_t *timer = NULL;
 
+hw_timer_t *timer = NULL;
 
 #if OLED_DISPLAY == 3
 #include <SPI.h>
@@ -262,7 +262,7 @@ float inX = 0, inY = 0, inOld = 0, inSum = 0; // used for filterPressureValue()
 int signalBars = 0;              // used for getSignalStrength()
 boolean brewDetected = 0;
 boolean setupDone = false;
-int backflushON = 0;             // 1 = backflush mode active
+uint8_t backflushON = 0;             // 1 = backflush mode active
 int flushCycles = 0;             // number of active flush cycles
 int backflushState = 10;         // counter for state machine
 
@@ -462,6 +462,17 @@ const unsigned long intervalDisplay = 500;
             debugPrintf("pressure raw / filtered: %f / %f\n", inputPressure, inputPressureFilter);
         }
     }
+#endif
+
+#if (ROTARY_MENU == 1)
+    #include <LCDMenuLib2.h>
+    #include <ESP32Encoder.h> 
+    ESP32Encoder encoder;
+    #include "button.h"
+    button_event_t ev;
+    QueueHandle_t button_events = button_init(PIN_BIT(PIN_ROTARY_SW));
+    boolean menuOpen = false;
+    #include "menu.h"
 #endif
 
 // Emergency stop if temp is too high
@@ -2146,6 +2157,17 @@ void setup() {
         pinMode(PIN_STATUSLED, OUTPUT);
     }
 
+    #if(ROTARY_MENU == 1)
+        pinMode(PIN_ROTARY_DT, INPUT_PULLUP);
+        pinMode(PIN_ROTARY_CLK, INPUT_PULLUP);
+        pinMode(PIN_ROTARY_SW, INPUT_PULLUP);
+
+        encoder.attachFullQuad(PIN_ROTARY_DT, PIN_ROTARY_CLK);
+        encoder.setCount(0);
+
+        setupMenu();
+    #endif
+
     #if OLED_DISPLAY != 0
         u8g2.setI2CAddress(oled_i2c * 2);
         u8g2.begin();
@@ -2241,6 +2263,24 @@ void setup() {
 
 void loop() {
     looppid();
+
+    #if ROTARY_MENU == 1
+        if (menuOpen == false) {
+            if (xQueueReceive(button_events, &ev, 1/portTICK_PERIOD_MS)) {
+                if (ev.event == BUTTON_UP) {
+                    menuOpen = true;
+                    #if ROTARY_MENU_DEBUG == 1
+                        debugPrintf("Opening Menu!\n");
+                    #endif 
+                    displayMenu();
+                }
+            }
+        }
+
+        if (menuOpen == true) {
+            LCDML.loop();
+        } 
+    #endif
 
     if (TEMP_LED) {
         loopLED();
@@ -2361,17 +2401,23 @@ void looppid() {
 
     // Check if PID should run or not. If not, set to manual and force output to zero
 #if OLED_DISPLAY != 0
-    unsigned long currentMillisDisplay = millis();
-    if (currentMillisDisplay - previousMillisDisplay >= 100) {
-        displayShottimer();
-    }
-    if (currentMillisDisplay - previousMillisDisplay >= intervalDisplay) {
-        previousMillisDisplay = currentMillisDisplay;
-    #if DISPLAYTEMPLATE < 20  // not using vertical template
-        Displaymachinestate();
+    #if ROTARY_MENU == 1 // only draw the display template if the menu is not open
+    if (!menuOpen) {
     #endif
-        printScreen();  // refresh display
+        unsigned long currentMillisDisplay = millis();
+        if (currentMillisDisplay - previousMillisDisplay >= 100) {
+            displayShottimer();
+        }
+        if (currentMillisDisplay - previousMillisDisplay >= intervalDisplay) {
+            previousMillisDisplay = currentMillisDisplay;
+        #if DISPLAYTEMPLATE < 20  // not using vertical template
+            Displaymachinestate();
+        #endif
+            printScreen();  // refresh display
+        }
+    #if ROTARY_MENU == 1
     }
+    #endif
 #endif
 
     if (machineState == kPidOffline || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDdisabled) {

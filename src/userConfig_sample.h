@@ -67,6 +67,10 @@ enum MACHINE {
 #define SCALE_SAMPLES 2                    // Load cell sample rate
 #define SINGLE_HX711 0             // 1 = Only a single HX711 with two channels, 0 = one HX711 per load cell
 
+// Rotary Encoder Menu
+#define ROTARY_MENU 0              // 0 = off, 1 = on
+#define ROTARY_MENU_DEBUG 0        // 0 = off, 1 = on
+
 /* Pressure sensor
  *
  * measure and verify "offset" value, should be 10% of ADC bit reading @supply volate (3.3V)
@@ -94,4 +98,3 @@ enum MACHINE {
 #define EMA_FACTOR 0.6             // Smoothing of input that is used for Tv (derivative component of PID). Smaller means less smoothing but also less delay, 0 means no filtering
 
 #define TEMPSENSOR 2               // Temp sensor type: 1 = DS18B20, 2 = TSIC306
-
