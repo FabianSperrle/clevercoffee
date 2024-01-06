@@ -352,6 +352,14 @@ void brew() {
 
                     coldstart = false;  // force reset coldstart if shot is pulled
                     weightPreBrew = weight;
+                    prevFlowRateWeight = weight;
+                    prevFlowRateTime = currentMillistemp;
+                    flowRateMeasurements = 0;
+                    flowRateBufferIndex = 0;
+                    for (int i = 0; i < flowRateBufferSize; i++) {
+                        flowRateBuffer[i] = 0;
+                    }
+                    
                 } else {
                     backflush();
                 }
@@ -426,6 +434,7 @@ void brew() {
 
                     // disarmed button
                     currentMillistemp = 0;
+                    lastbrewTime = timeBrewed;
                     timeBrewed = 0;
                     brewDetected = 0;  // rearm brewDetection
                     brewcounter = kBrewIdle;
@@ -435,6 +444,44 @@ void brew() {
 
                 break;
         }
+
+        if (brewcounter > kBrewIdle && brewcounter < kWaitBrewOff) {
+            // Calculate time and weight difference
+            unsigned long timeDelta = currentMillistemp - prevFlowRateTime;
+            float weightDelta = weightBrew - prevFlowRateWeight;
+            // avoid flowrate flicker when scale flickers negatively
+            if (weightDelta < 0) {
+                weightDelta = 0;
+            }
+
+            // Calculate flow rate
+            // we only get a new weight measurement every intervalWeight ms, so we do not need to compute this more often!
+            if (timeDelta > intervalWeight) {
+                float currentFlowRate = weightDelta / (timeDelta / 1000.0); // Flow rate in g/s
+
+                // Update buffer
+                flowRateBuffer[flowRateBufferIndex] = currentFlowRate;
+                flowRateBufferIndex = (flowRateBufferIndex + 1) % flowRateBufferSize;
+                if (flowRateMeasurements < flowRateBufferSize) {
+                    flowRateMeasurements++;
+                }
+
+                // Calculate the average flow rate
+                float averageFlowRate = 0.0;
+                for (int i = 0; i < flowRateMeasurements; i++) {
+                    averageFlowRate += flowRateBuffer[i];
+                }
+                flowRate = averageFlowRate / flowRateBufferSize;
+
+                // debugPrintf("Delta %i, weightDelta %.2f. Curr: %.2f, flowrate %.2f //// time: %i, weight %.2f\n", timeDelta, weightDelta, currentFlowRate, flowRate, timeBrewed, weightBrew);
+
+                prevFlowRateTime = currentMillistemp;
+                prevFlowRateWeight = weightBrew;
+            }
+        } else {
+            flowRate = 0;
+        }
+
     }
 }
 #endif
