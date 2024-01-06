@@ -18,7 +18,8 @@ enum BrewState {
     kBrewRunning = 40,
     kWaitBrew = 41,
     kBrewFinished = 42,
-    kWaitBrewOff = 43
+    kBrewWaitTrickle = 43,
+    kWaitBrewOff = 44
 };
 
 // Normal Brew
@@ -52,6 +53,8 @@ unsigned long previousMillistempanalogreading;      // ms for analogreading
     bool scaleFailure = false;
     const unsigned long intervalWeight = 200;           // weight scale
     unsigned long previousMillisScale;                  // initialisation at the end of init()
+    unsigned long timeTrickleStarted = 0;
+    unsigned long timeTrickling = 0;
     HX711_ADC LoadCell(PIN_HXDAT, PIN_HXCLK);
     #if SINGLE_HX711 == 0 
     HX711_ADC LoadCell2(PIN_HXDAT2, PIN_HXCLK);
