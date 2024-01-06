@@ -73,7 +73,7 @@ void checkWeight() {
 
             #if SINGLE_HX711 == 0
             w2 = LoadCell2.getData();
-            debugPrintf("Current weight: %.2f from %.2f and %.2f\n", weight, w1, w2);
+            // debugPrintf("Current weight: %.2f from %.2f and %.2f\n", weight, w1, w2);
             #endif
         }
     }
