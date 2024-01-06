@@ -45,12 +45,12 @@ hw_timer_t *timer = NULL;
 #endif
 
 #if (BREWMODE == 2 || ONLYPIDSCALE == 1)
-    // #define HX711_ADC_config_h 
-    // #define SAMPLES 					2
-    // #define IGN_HIGH_SAMPLE 			1
-    // #define IGN_LOW_SAMPLE 				1
-    // #define SCK_DELAY					1
-    // #define SCK_DISABLE_INTERRUPTS		0		
+    #define HX711_ADC_config_h 
+    #define SAMPLES 					32
+    #define IGN_HIGH_SAMPLE 			1
+    #define IGN_LOW_SAMPLE 				1
+    #define SCK_DELAY					1
+    #define SCK_DISABLE_INTERRUPTS		0		
     #include <HX711_ADC.h>
 #endif
 
@@ -2207,6 +2207,11 @@ void setup() {
 
     temperature -= brewTempOffset;
 
+    // Init Scale by BREWMODE 2 or SHOTTIMER 2
+    #if (BREWMODE == 2 || ONLYPIDSCALE == 1)
+        initScale();
+    #endif
+
     // Initialisation MUST be at the very end of the init(), otherwise the
     // time comparision in loop() will have a big offset
     unsigned long currentTime = millis();
@@ -2222,11 +2227,6 @@ void setup() {
     #endif
     #if (PRESSURESENSOR == 1)
         previousMillisPressure = currentTime;
-    #endif
-
-    // Init Scale by BREWMODE 2 or SHOTTIMER 2
-    #if (BREWMODE == 2 || ONLYPIDSCALE == 1)
-        initScale();
     #endif
 
     setupDone = true;
