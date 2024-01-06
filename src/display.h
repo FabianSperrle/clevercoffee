@@ -21,6 +21,18 @@ void u8g2_prepare(void) {
     u8g2.setDisplayRotation(DISPLAYROTATE);
 }
 
+/**
+ * Show water empty icon in upper right corner if water supply is low
+ */
+void displayWaterIcon() {
+        if (!waterFull) {
+            u8g2.drawXBMP(119, 2, 8, 8, water_EMPTY_u8g2);
+		}
+}
+
+void displayIcons() {
+    displayWaterIcon();
+}
 
 /**
  * @brief print message
@@ -39,6 +51,7 @@ void displayMessage(String text1, String text2, String text3, String text4, Stri
     u8g2.print(text5);
     u8g2.setCursor(0, 50);
     u8g2.print(text6);
+    displayIcons();
     u8g2.sendBuffer();
 }
 
@@ -73,7 +86,7 @@ void displayLogo(String displaymessagetext, String displaymessagetext2) {
                             startLogoQuickMill_bits);
             break;
     }
-
+    displayIcons();
     u8g2.sendBuffer();
 }
 
@@ -88,6 +101,7 @@ void displayDistance(int display_distance) {
     u8g2.setFont(u8g2_font_fub20_tf);
     u8g2.printf("%d", display_distance);
     u8g2.print("mm");
+    displayIcons();
     u8g2.sendBuffer();
 }
 
@@ -104,6 +118,7 @@ void displayShottimer(void) {
         u8g2.setCursor(64, 25);
         u8g2.print(timeBrewed / 1000, 1);
         u8g2.setFont(u8g2_font_profont11_tf);
+        displayIcons();
         u8g2.sendBuffer();
     }
 
@@ -118,6 +133,7 @@ void displayShottimer(void) {
         u8g2.setCursor(64, 25);
         u8g2.print(lastbrewTime / 1000, 1);
         u8g2.setFont(u8g2_font_profont11_tf);
+        displayIcons();
         u8g2.sendBuffer();
     }
 
@@ -138,6 +154,7 @@ void displayShottimer(void) {
             u8g2.print(flowRate, 1);
             u8g2.print("g/s");
             u8g2.setFont(u8g2_font_profont11_tf);
+            displayIcons();
             u8g2.sendBuffer();
         }
 
@@ -155,6 +172,7 @@ void displayShottimer(void) {
             u8g2.print(flowRate, 1);
             u8g2.print("g/s");
             u8g2.setFont(u8g2_font_profont11_tf);
+            displayIcons();
             u8g2.sendBuffer();
         }
     #endif
@@ -258,6 +276,7 @@ void Displaymachinestate() {
         u8g2.setCursor(92, 30);
         u8g2.setFont(u8g2_font_profont17_tf);
         u8g2.print(temperature, 1);
+        displayIcons();
         u8g2.sendBuffer();
     }
 
@@ -268,6 +287,7 @@ void Displaymachinestate() {
         u8g2.setCursor(0, 55);
         u8g2.setFont(u8g2_font_profont10_tf);
         u8g2.print("PID is disabled manually");
+        displayIcons();
         u8g2.sendBuffer();
     }
 
@@ -277,6 +297,7 @@ void Displaymachinestate() {
         u8g2.setCursor(36, 55);
         u8g2.setFont(u8g2_font_profont10_tf);
         u8g2.print("Standby mode");
+        displayIcons();
         u8g2.sendBuffer();
     }
 
@@ -288,6 +309,15 @@ void Displaymachinestate() {
         u8g2.setFont(u8g2_font_profont22_tf);
         u8g2.print(temperature, 0);
         u8g2.setCursor(64, 25);
+        displayIcons();
+        u8g2.sendBuffer();
+    }
+
+    // Water empty
+    if (machineState == kWaterEmpty) {
+        u8g2.clearBuffer();
+        u8g2.drawXBMP( 45, 0, water_empty_big_width, water_empty_big_height, water_EMPTY_big_u8g2); 
+        u8g2.setFont(u8g2_font_profont11_tf);
         u8g2.sendBuffer();
     }
 
@@ -338,6 +368,7 @@ void Displaymachinestate() {
             u8g2.print("PID STOPPED");
         }
 
+        displayIcons();
         u8g2.sendBuffer();
     }
 

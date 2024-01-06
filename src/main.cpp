@@ -79,6 +79,7 @@ enum MachineState {
     kSteam = 40,
     kCoolDown = 45,
     kBackflush = 50,
+    kWaterEmpty = 70,
     kEmergencyStop = 80,
     kPidOffline = 90,
     kStandby = 95,
@@ -160,6 +161,7 @@ void setBDPIDTunings();
 void loopcalibrate();
 void looppid();
 void loopLED();
+void loopWater();
 void printMachineState();
 char const* machinestateEnumToString(MachineState machineState);
 void initSteamQM();
@@ -265,6 +267,14 @@ boolean setupDone = false;
 uint8_t backflushON = 0;             // 1 = backflush mode active
 int flushCycles = 0;             // number of active flush cycles
 int backflushState = 10;         // counter for state machine
+
+// Water sensor
+boolean waterFull = true;
+unsigned long lastWaterCheck;
+const unsigned long WaterCheckInterval = 200;   // Check water level every 200 ms
+int waterCheckConsecutiveReads = 0;             // Counter for consecutive readings of water sensor
+const int waterCountsNeeded = 3;                // Number of same readings to change water sensing
+
 
 // Moving average for software brew detection
 double tempRateAverage = 0;             // average value of temp values
@@ -971,6 +981,10 @@ void handleMachineState() {
                 machineState = kPidOffline;
             }
 
+            if (!waterFull) {
+                machineState = kWaterEmpty;
+            }
+
             if (sensorError) {
                 machineState = kSensorError;
             }
@@ -1042,6 +1056,10 @@ void handleMachineState() {
                 machineState = kPidOffline;
             }
 
+            if (!waterFull) {
+                machineState = kWaterEmpty;
+            }
+
             if (sensorError) {
                 machineState = kSensorError;
             }
@@ -1089,6 +1107,10 @@ void handleMachineState() {
 
             if (pidON == 0 && machineState != kStandby) {
                 machineState = kPidOffline;
+            }
+
+            if (!waterFull) {
+                machineState = kWaterEmpty;
             }
 
             if (sensorError) {
@@ -1139,9 +1161,14 @@ void handleMachineState() {
                 machineState = kPidOffline;
             }
 
+            if (!waterFull) {
+                machineState = kWaterEmpty;
+            }
+
             if (sensorError) {
                 machineState = kSensorError;
             }
+
             break;
 
         case kBrew:
@@ -1206,6 +1233,10 @@ void handleMachineState() {
                 machineState = kPidOffline;
             }
 
+            if (!waterFull) {
+                machineState = kWaterEmpty;
+            }
+
             if (sensorError) {
                 machineState = kSensorError;
             }
@@ -1242,6 +1273,10 @@ void handleMachineState() {
                 machineState = kPidOffline;
             }
 
+            if (!waterFull) {
+                machineState = kWaterEmpty;
+            }
+
             if (sensorError) {
                 machineState = kSensorError;
             }
@@ -1262,6 +1297,10 @@ void handleMachineState() {
 
             if (pidON == 0) {
                 machineState = kPidOffline;
+            }
+
+            if (!waterFull) {
+                machineState = kWaterEmpty;
             }
 
             if (sensorError) {
@@ -1304,6 +1343,10 @@ void handleMachineState() {
                 machineState = kPidOffline;
             }
 
+            if (!waterFull) {
+                machineState = kWaterEmpty;
+            }
+
             if (sensorError) {
                 machineState = kSensorError;
             }
@@ -1322,6 +1365,10 @@ void handleMachineState() {
                 machineState = kPidOffline;
             }
 
+            if (!waterFull) {
+                machineState = kWaterEmpty;
+            }
+
             if (sensorError) {
                 machineState = kSensorError;
             }
@@ -1329,6 +1376,20 @@ void handleMachineState() {
 
         case kEmergencyStop:
             if (!emergencyStop) {
+                machineState = kPidNormal;
+            }
+
+            if (pidON == 0) {
+                machineState = kPidOffline;
+            }
+
+            if (sensorError) {
+                machineState = kSensorError;
+            }
+            break;
+
+        case kWaterEmpty:
+            if (waterFull) {
                 machineState = kPidNormal;
             }
 
@@ -1351,6 +1412,10 @@ void handleMachineState() {
                     machineState = kColdStart;  // temperature 10C below set point, enter cold start
                     coldstart = true;
                 }
+            }
+
+            if (!waterFull) {
+                machineState = kWaterEmpty;
             }
 
             if (sensorError) {
@@ -1421,6 +1486,8 @@ char const* machinestateEnumToString(MachineState machineState) {
             return "Cool Down";
         case kBackflush:
             return "Backflush";
+        case kWaterEmpty:
+            return "Water Empty";
         case kEmergencyStop:
             return "Emergency Stop";
         case kPidOffline:
@@ -2157,6 +2224,12 @@ void setup() {
         pinMode(PIN_STATUSLED, OUTPUT);
     }
 
+    #if WATER_SENS == 1
+        pinMode(PIN_WATERSENSOR, INPUT_PULLUP);
+    #elif WATER_SENS == 2
+        pinMode(PIN_WATERSENSOR, INPUT_PULLDOWN);
+    #endif
+
     #if(ROTARY_MENU == 1)
         pinMode(PIN_ROTARY_DT, INPUT_PULLUP);
         pinMode(PIN_ROTARY_CLK, INPUT_PULLUP);
@@ -2286,6 +2359,10 @@ void loop() {
         loopLED();
     }
 
+    if (WATER_SENS > 0) {
+        loopWater();
+    }
+
     checkForRemoteSerialClients();
 }
 
@@ -2375,8 +2452,15 @@ void looppid() {
         checkPressure();
     #endif
 
-    brew();
     checkSteamON();
+
+    if(machineState != kWaterEmpty) {
+        brew();
+    }
+
+    setEmergencyStopTemp();
+    checkSteamSwitch();
+    checkPowerSwitch();
 
     // set setpoint depending on steam or brew mode
     if (steamON == 1) {
@@ -2386,8 +2470,6 @@ void looppid() {
     }
 
     setEmergencyStopTemp();
-    checkPowerSwitch();
-    checkSteamSwitch();
 
     if (standbyModeOn && machineState != kStandby) {
         updateStandbyTimer();
@@ -2420,7 +2502,7 @@ void looppid() {
     #endif
 #endif
 
-    if (machineState == kPidOffline || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDdisabled) {
+    if (machineState == kPidOffline || machineState == kWaterEmpty || machineState == kSensorError || machineState == kEmergencyStop || machineState == kEepromError || machineState == kStandby || brewPIDdisabled) {
         if (pidMode == 1) {
             // Force PID shutdown
             pidMode = 0;
@@ -2531,6 +2613,45 @@ void loopLED() {
     }
     else {
         digitalWrite(PIN_STATUSLED, LOW);
+    }
+}
+
+void loopWater() {
+    if ((millis() - lastWaterCheck) > WaterCheckInterval) {
+        lastWaterCheck = millis();
+
+        bool isWaterDetected = digitalRead(PIN_WATERSENSOR) == (WATER_SENS == 1 ? LOW : HIGH);
+    
+        if (isWaterDetected) {
+            // Water is detected, increment counter if it was previously empty
+            if (!waterFull) {
+                waterCheckConsecutiveReads++;
+
+                if (waterCheckConsecutiveReads >= waterCountsNeeded) {
+                    waterFull = true;
+                    debugPrintln("Water full");
+                    waterCheckConsecutiveReads = 0;
+                }
+            } 
+            else {
+                waterCheckConsecutiveReads = 0;
+            }
+        } 
+        else {
+            // No water detected, increment counter if it was previously full
+            if (waterFull) {
+                waterCheckConsecutiveReads++;
+                
+                if (waterCheckConsecutiveReads >= waterCountsNeeded) {
+                    waterFull = false;
+                    debugPrintln("Water empty");
+                    waterCheckConsecutiveReads = 0;
+                }
+            } 
+            else {
+                waterCheckConsecutiveReads = 0;
+            }
+        }
     }
 }
 
