@@ -52,4 +52,13 @@ unsigned long previousMillistempanalogreading;      // ms for analogreading
     const unsigned long intervalWeight = 200;           // weight scale
     unsigned long previousMillisScale;                  // initialisation at the end of init()
     HX711_ADC LoadCell(PIN_HXDAT, PIN_HXCLK);
+
+    // flow rate calculation
+    unsigned long prevFlowRateTime = 0;
+    float prevFlowRateWeight = 0.0;
+    float flowRate = 0.0;
+    const int flowRateBufferSize = 10; // Use a smoothed average over the last `bufferSize` readings for less erratic changes
+    float flowRateBuffer[flowRateBufferSize];
+    int flowRateBufferIndex = 0;
+    int flowRateMeasurements = 0;
 #endif
