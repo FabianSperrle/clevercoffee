@@ -197,7 +197,7 @@ void shottimerscale() {
             break;
 
         case 20:
-            weightBrew = weight - weightPreBrew;
+            // weightBrew = weight - weightPreBrew;
 
             if (timeBrewed == 0) {
                 shottimercounter = 10;

@@ -326,6 +326,9 @@ void brew() {
         }
         if (brewcounter > kBrewIdle && brewcounter < kWaitBrewOff) {
             weightBrew = weight - weightPreBrew;
+            if (weightBrew < 0) {
+                weightBrew = 0;
+            }
         }
         if (brewcounter == kBrewWaitTrickle) {
             timeTrickling = currentMillistemp - timeTrickleStarted;
@@ -354,6 +357,11 @@ void brew() {
                     weightPreBrew = weight;
                     prevFlowRateWeight = weight;
                     prevFlowRateTime = currentMillistemp;
+
+                    // debugPrintln("=====================================");
+                    // debugPrintln("START NEW SHOT");
+                    // debugPrintln("=====================================");
+                    // debugPrintf("timeDelta; weightDelta; currentFlowRate; flowRate; timeBrewed; weightBrew\n");
                 } else {
                     backflush();
                 }
@@ -436,6 +444,8 @@ void brew() {
 
                 weightBrew = weight - weightPreBrew;  // always calculate weight to show on display
 
+                debugPrintln("=====================================");
+
                 break;
         }
 
@@ -444,7 +454,7 @@ void brew() {
             unsigned long timeDelta = currentMillistemp - prevFlowRateTime;
             float weightDelta = weightBrew - prevFlowRateWeight;
             // avoid flowrate flicker when scale flickers negatively
-            if (weightDelta < 0 || weightBrew < 0.5) {
+            if (weightDelta < 0) {
                 weightDelta = 0;
             }
 
@@ -454,7 +464,8 @@ void brew() {
                 float currentFlowRate = weightDelta / (timeDelta / 1000.0); // Flow rate in g/s
                 flowRate = flowRateEmaAlpha * currentFlowRate + (1 - flowRateEmaAlpha) * flowRate;
 
-                debugPrintf("Delta %i, weightDelta %.2f. Curr: %.2f, flowrate %.2f //// time: %i, weight %.2f\n", timeDelta, weightDelta, currentFlowRate, flowRate, timeBrewed, weightBrew);
+                // debugPrintf("Delta %i, weightDelta %.2f. Curr: %.2f, flowrate %.2f //// time: %i, weight %.2f\n", timeDelta, weightDelta, currentFlowRate, flowRate, timeBrewed, weightBrew);
+                debugPrintf("%i; %.2f; %.2f; %.2f; %d; %.2f\n", timeDelta, weightDelta, currentFlowRate, flowRate, timeBrewed, weightBrew);
 
                 prevFlowRateTime = currentMillistemp;
                 prevFlowRateWeight = weightBrew;

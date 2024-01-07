@@ -65,5 +65,5 @@ unsigned long previousMillistempanalogreading;      // ms for analogreading
     unsigned long prevFlowRateTime = 0;
     float prevFlowRateWeight = 0.0;
     float flowRate = 0.0;
-    float flowRateEmaAlpha = 0.3;
+    float flowRateEmaAlpha = 0.05;
 #endif
