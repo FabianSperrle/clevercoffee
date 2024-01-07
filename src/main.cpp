@@ -2159,10 +2159,11 @@ void setup() {
     mqttSensors["currentKi"] = []{ return bPID.GetKi(); };
     mqttSensors["currentKd"] = []{ return bPID.GetKd(); };
     mqttSensors["machineState"] = []{ return machineState; };
-#if (BREWMODE == 2 || ONLYPIDSCALE == 1)
-    mqttSensors["currentWeight"] = []{ return weight; };
-#endif
-
+    #if (ONLYPIDSCALE == 1 || BREWMODE == 2) 
+        mqttSensors["weight"] = []{ return weight; };
+        mqttSensors["flowRate"] = []{ return flowRate; };
+    }
+    #endif
 
     Serial.begin(115200);
 
