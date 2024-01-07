@@ -2162,7 +2162,6 @@ void setup() {
     #if (ONLYPIDSCALE == 1 || BREWMODE == 2) 
         mqttSensors["weight"] = []{ return weight; };
         mqttSensors["flowRate"] = []{ return flowRate; };
-    }
     #endif
 
     Serial.begin(115200);
