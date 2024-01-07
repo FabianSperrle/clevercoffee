@@ -51,7 +51,7 @@ unsigned long previousMillistempanalogreading;      // ms for analogreading
     float weightBrew = 0;                               // weight value of brew
     float scaleDelayValue = 2.5;                        // value in gramm that takes still flows onto the scale after brew is stopped
     bool scaleFailure = false;
-    const unsigned long intervalWeight = 200;           // weight scale
+    const unsigned long intervalWeight = 50;           // weight scale
     unsigned long previousMillisScale;                  // initialisation at the end of init()
     unsigned long timeTrickleStarted = 0;
     unsigned long timeTrickling = 0;

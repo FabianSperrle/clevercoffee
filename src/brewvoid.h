@@ -450,7 +450,7 @@ void brew() {
             unsigned long timeDelta = currentMillistemp - prevFlowRateTime;
             float weightDelta = weightBrew - prevFlowRateWeight;
             // avoid flowrate flicker when scale flickers negatively
-            if (weightDelta < 0) {
+            if (weightDelta < 0 || weight < 0.5) {
                 weightDelta = 0;
             }
 
@@ -473,7 +473,7 @@ void brew() {
                 }
                 flowRate = averageFlowRate / flowRateBufferSize;
 
-                // debugPrintf("Delta %i, weightDelta %.2f. Curr: %.2f, flowrate %.2f //// time: %i, weight %.2f\n", timeDelta, weightDelta, currentFlowRate, flowRate, timeBrewed, weightBrew);
+                debugPrintf("Delta %i, weightDelta %.2f. Curr: %.2f, flowrate %.2f //// time: %i, weight %.2f\n", timeDelta, weightDelta, currentFlowRate, flowRate, timeBrewed, weightBrew);
 
                 prevFlowRateTime = currentMillistemp;
                 prevFlowRateWeight = weightBrew;
