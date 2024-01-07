@@ -349,12 +349,6 @@ void brew() {
                     weightPreBrew = weight;
                     prevFlowRateWeight = weight;
                     prevFlowRateTime = currentMillistemp;
-                    flowRateMeasurements = 0;
-                    flowRateBufferIndex = 0;
-                    for (int i = 0; i < flowRateBufferSize; i++) {
-                        flowRateBuffer[i] = 0;
-                    }
-                    
                 } else {
                     backflush();
                 }
@@ -449,20 +443,7 @@ void brew() {
             // we only get a new weight measurement every intervalWeight ms, so we do not need to compute this more often!
             if (timeDelta > intervalWeight) {
                 float currentFlowRate = weightDelta / (timeDelta / 1000.0); // Flow rate in g/s
-
-                // Update buffer
-                flowRateBuffer[flowRateBufferIndex] = currentFlowRate;
-                flowRateBufferIndex = (flowRateBufferIndex + 1) % flowRateBufferSize;
-                if (flowRateMeasurements < flowRateBufferSize) {
-                    flowRateMeasurements++;
-                }
-
-                // Calculate the average flow rate
-                float averageFlowRate = 0.0;
-                for (int i = 0; i < flowRateMeasurements; i++) {
-                    averageFlowRate += flowRateBuffer[i];
-                }
-                flowRate = averageFlowRate / flowRateBufferSize;
+                flowRate = flowRateEmaAlpha * currentFlowRate + (1 - flowRateEmaAlpha) * flowRate;
 
                 // debugPrintf("Delta %i, weightDelta %.2f. Curr: %.2f, flowrate %.2f //// time: %i, weight %.2f\n", timeDelta, weightDelta, currentFlowRate, flowRate, timeBrewed, weightBrew);
 
