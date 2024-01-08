@@ -440,6 +440,7 @@ void brew() {
                     timeBrewed = 0;
                     brewDetected = 0;  // rearm brewDetection
                     brewcounter = kBrewIdle;
+                    BrewFinishedLEDon = BrewFinishedLEDonDuration;
                 }
 
                 weightBrew = weight - weightPreBrew;  // always calculate weight to show on display
