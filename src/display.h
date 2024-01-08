@@ -8,7 +8,6 @@
 
 #if (OLED_DISPLAY != 0)
 
-
 /**
  * @brief initialize display
  */
@@ -22,16 +21,12 @@ void u8g2_prepare(void) {
 }
 
 /**
- * Show water empty icon in upper right corner if water supply is low
+ * @brief Show water empty icon in upper right corner if water supply is low
  */
-void displayWaterIcon() {
-        if (!waterFull) {
-            u8g2.drawXBMP(119, 2, 8, 8, water_EMPTY_u8g2);
-		}
-}
-
-void displayIcons() {
-    displayWaterIcon();
+void displayWaterIcon(int x, int y) {
+    if (!waterFull) {
+        u8g2.drawXBMP(x, y, 8, 8, water_EMPTY_u8g2);
+    }
 }
 
 /**
@@ -67,41 +62,22 @@ void displayLogo(String displaymessagetext, String displaymessagetext2) {
     // Rancilio startup logo
     switch (machine) {
         case RancilioSilvia:  // Rancilio
-            u8g2.drawXBMP(41, 2, startLogoRancilio_width, startLogoRancilio_height,
-                            startLogoRancilio_bits);
+            u8g2.drawXBMP(41, 2, startLogoRancilio_width, startLogoRancilio_height, startLogoRancilio_bits);
             break;
 
         case RancilioSilviaE:  // Rancilio
-            u8g2.drawXBMP(41, 2, startLogoRancilio_width, startLogoRancilio_height,
-                            startLogoRancilio_bits);
+            u8g2.drawXBMP(41, 2, startLogoRancilio_width, startLogoRancilio_height, startLogoRancilio_bits);
             break;
 
         case Gaggia:  // Gaggia
-            u8g2.drawXBMP(0, 2, startLogoGaggia_width, startLogoGaggia_height,
-                            startLogoGaggia_bits);
+            u8g2.drawXBMP(0, 2, startLogoGaggia_width, startLogoGaggia_height, startLogoGaggia_bits);
             break;
 
         case QuickMill:  // Quickmill
-            u8g2.drawXBMP(22, 0, startLogoQuickMill_width, startLogoQuickMill_height,
-                            startLogoQuickMill_bits);
+            u8g2.drawXBMP(22, 0, startLogoQuickMill_width, startLogoQuickMill_height, startLogoQuickMill_bits);
             break;
     }
-    displayIcons();
-    u8g2.sendBuffer();
-}
 
-/**
- * @brief calibration mode
- *
- * @param display_distance
- */
-void displayDistance(int display_distance) {
-    u8g2.clearBuffer();
-    u8g2.setCursor(13, 12);
-    u8g2.setFont(u8g2_font_fub20_tf);
-    u8g2.printf("%d", display_distance);
-    u8g2.print("mm");
-    displayIcons();
     u8g2.sendBuffer();
 }
 
@@ -118,7 +94,7 @@ void displayShottimer(void) {
         u8g2.setCursor(64, 25);
         u8g2.print(timeBrewed / 1000, 1);
         u8g2.setFont(u8g2_font_profont11_tf);
-        displayIcons();
+        displayWaterIcon(119, 1);
         u8g2.sendBuffer();
     }
 
@@ -133,7 +109,7 @@ void displayShottimer(void) {
         u8g2.setCursor(64, 25);
         u8g2.print(lastbrewTime / 1000, 1);
         u8g2.setFont(u8g2_font_profont11_tf);
-        displayIcons();
+        displayWaterIcon(119, 1);
         u8g2.sendBuffer();
     }
 
@@ -154,7 +130,7 @@ void displayShottimer(void) {
             u8g2.print(flowRate, 1);
             u8g2.print("g/s");
             u8g2.setFont(u8g2_font_profont11_tf);
-            displayIcons();
+            displayWaterIcon(119, 1);
             u8g2.sendBuffer();
         }
 
@@ -172,7 +148,7 @@ void displayShottimer(void) {
             u8g2.print(flowRate, 1);
             u8g2.print("g/s");
             u8g2.setFont(u8g2_font_profont11_tf);
-            displayIcons();
+            displayWaterIcon(119, 1);
             u8g2.sendBuffer();
         }
     #endif
@@ -236,7 +212,8 @@ void Displaymachinestate() {
                 for (int b = 0; b <= signalBars; b++) {
                     u8g2.drawVLine(45 + (b * 2), 10 - (b * 2), b * 2);
                 }
-            } else {
+            }
+            else {
                 u8g2.drawXBMP(40, 2, 8, 8, antenna_NOK_u8g2);
                 u8g2.setCursor(88, 1);
                 u8g2.print("RC: ");
@@ -248,7 +225,8 @@ void Displaymachinestate() {
                     u8g2.setCursor(60, 1);
                     u8g2.setFont(u8g2_font_profont11_tf);
                     u8g2.print("MQTT");
-                } else {
+                }
+                else {
                     u8g2.setCursor(60, 2);
                     u8g2.print("");
                 }
@@ -309,7 +287,7 @@ void Displaymachinestate() {
         u8g2.setFont(u8g2_font_profont22_tf);
         u8g2.print(temperature, 0);
         u8g2.setCursor(64, 25);
-        displayIcons();
+        displayWaterIcon(119, 1);
         u8g2.sendBuffer();
     }
 
@@ -328,11 +306,13 @@ void Displaymachinestate() {
             #if OLED_DISPLAY != 0
                 displayMessage(langstring_bckffinished[0], langstring_bckffinished[1], "", "", "", "");
             #endif
-        } else if (backflushState == 10) {
+        }
+        else if (backflushState == 10) {
             #if OLED_DISPLAY != 0
                 displayMessage(langstring_bckfactivated[0], langstring_bckfactivated[1], "", "", "", "");
             #endif
-        } else if (backflushState > 10) {
+        }
+        else if (backflushState > 10) {
             #if OLED_DISPLAY != 0
                 displayMessage(langstring_bckfrunning[0], String(flushCycles), langstring_bckfrunning[1], String(maxflushCycles), "", "");
             #endif
@@ -384,4 +364,5 @@ void Displaymachinestate() {
         displayMessage("EEPROM Error, please set Values", "", "", "", "", "");
     }
 }
+
 #endif
